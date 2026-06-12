@@ -1,0 +1,20 @@
+# Python dependencies for the SightSense backend.
+# Package names are derived from the imports in the scripts; versions are
+# intentionally unpinned (this is a prototype with no tested lockfile).
+#
+# Note: ultralytics downloads the YOLO .pt weights on first run, and the
+# depth-estimation pipeline is configured for device='cuda' (needs an NVIDIA GPU).
+
+fastapi
+uvicorn
+ultralytics
+mediapipe
+transformers
+sentence-transformers
+easyocr
+gtts
+openai
+python-dotenv
+opencv-python
+pillow
+numpy
