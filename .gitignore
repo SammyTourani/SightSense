@@ -1,1 +1,32 @@
+# Secrets / local config
 .env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# Runtime scratch artifacts written by the pipeline
+captured_image.jpg
+captured_frame.jpg
+output.mp3
+
+# YOLO model weights (large, auto-downloaded by ultralytics on first run)
+*.pt
+yolov8*.pt
+
+## Xcode / macOS
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+DerivedData/
+build/
+Pods/
+.DS_Store
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
