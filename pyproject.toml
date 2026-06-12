@@ -12,3 +12,6 @@ select = ["E", "F", "I", "W", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Make the repo-root sightsense_core module importable from tests/ regardless of
+# how pytest is invoked.
+pythonpath = ["."]
