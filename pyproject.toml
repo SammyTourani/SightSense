@@ -1,0 +1,14 @@
+[tool.ruff]
+# Lint only the dependency-free core and its tests. The legacy pipeline scripts
+# (main.py, backendcodeforobjectgrabber.py, image-description.py,
+# image-to-tts.py) import heavy ML/CV libraries and run work at import time, so
+# they are intentionally out of scope for lint and unit tests.
+include = ["sightsense_core.py", "tests/**/*.py"]
+target-version = "py39"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

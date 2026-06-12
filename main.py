@@ -17,6 +17,14 @@ import shutil
 import cv2
 from fastapi.responses import JSONResponse
 import io
+from sightsense_core import (
+    DIRECTIONS,
+    PROMPTS,
+    build_description_prompt,
+    classify_intent_response,
+    extract_ocr_text,
+    reach_guidance,
+)
 
 
 #python -m uvicorn main:app --reload
@@ -49,8 +57,8 @@ def perform_ocr_and_speak(image_path, language='en'):
     result = reader.readtext(image_path)
     
     # Extract text from the result
-    extracted_text = " ".join([text[1] for text in result])
-    
+    extracted_text = extract_ocr_text(result)
+
     return extracted_text
 
 def analyze_image_with_gpt(image, api_key):
@@ -60,12 +68,7 @@ def analyze_image_with_gpt(image, api_key):
     _, buffer = cv2.imencode('.jpg', image)
     image_data = base64.b64encode(buffer).decode("utf-8")
 
-    prompt = (
-         "Describe the main elements of the image in simple, direct language. "
-        "Focus on key objects, their positions, and basic room features. Avoid detailed adjectives. "
-        "Mention people if present. Keep the description very brief, suitable for about 5-7 seconds of speech. "
-        "Explain this as if the user is blind or has impaired vision in adequate detail."
-    )
+    prompt = build_description_prompt()
 
     try:
         response = client.chat.completions.create(
@@ -88,8 +91,7 @@ def analyze_image_with_gpt(image, api_key):
 def hand_to_object_finder(image,i):
     image = cv2.imread("path_to_image.jpg")
     name = ''
-    directions = ["Right", "Up-Right", "Up", "Up-Left",
-                  "Left", "Down-Left", "Down", "Down-Right"]
+    directions = DIRECTIONS
 
     # Convert the input image to RGB
     rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -159,19 +161,8 @@ def hand_to_object_finder(image,i):
         hand_landmarks = hand_results.multi_hand_landmarks[0]
         hand_x = int(hand_landmarks.landmark[mp_hands.HandLandmark.WRIST].x * image.shape[1])
         hand_y = int(hand_landmarks.landmark[mp_hands.HandLandmark.WRIST].y * image.shape[0])
-        dx = object_x - hand_x
-        dy = object_y - hand_y
-        angle_radians = math.atan2(dy, dx)
-        angle_radians = (angle_radians + math.pi) % (2 * math.pi) - math.pi
-        angleindex = round((angle_radians + math.pi) / (math.pi / 4)) % 8
-        dist = math.sqrt((object_x - hand_x) ** 2 + (object_y - hand_y) ** 2)
         obd, handd = depth_map[object_y, object_x], depth_map[hand_y, hand_x]
-        if abs(int(handd) - int(obd)) >= 80:
-            return 'go forward'
-        elif (abs(int(handd) - int(obd)) <= 30) and dist <= 150:
-            return 'object within reach'
-        else:
-            return directions[angleindex]
+        return reach_guidance(object_x, object_y, hand_x, hand_y, obd, handd)
 
 
 
@@ -192,16 +183,7 @@ async def receive_speech(request: Request):
     cosine_scores = util.cos_sim(query_embedding_chatbot, doc_embeddings)[0] 
     ranked_docs = sorted(zip(cosine_scores.tolist(), prompts), reverse=True, key=lambda x: x[0])
     score, name = ranked_docs[0]
-    if score <= 0.35:
-        response_toapp = "I'm Sorry I could not understand"
-    elif name == prompts[0]:
-        response_toapp = 'Ok, I will begin reading the text, please point your camera towards it'
-    elif name == prompts[1]:
-        response_toapp = 'Ok, I will describe what is infront of you'
-    elif name == prompts[2]:
-        response_toapp = 'Ok, locating the object'
-    elif name == prompts[3]:
-        response_toapp = 'I am not equipped to answer that please try asking a different question'
+    response_toapp = classify_intent_response(score, name)
     print("Received from Swift:", recognized_text)
     # ...use recognized_text to trigger your YOLO, Mediapipe, etc.
     return (response_toapp)

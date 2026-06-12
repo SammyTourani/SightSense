@@ -1,5 +1,7 @@
 # SightSense
 
+![CI](https://github.com/SammyTourani/SightSense/actions/workflows/ci.yml/badge.svg)
+
 SightSense is an accessibility prototype that turns a live camera feed into spoken
 feedback for visually impaired users. You speak a request, the app captures a frame,
 a computer-vision backend processes it, and the result is read back to you.
@@ -32,9 +34,11 @@ actions, and the backend runs the matching pipeline:
 ```
 .
 ├── main.py                         # FastAPI server: /speech (intent) and /process-image (pipeline)
+├── sightsense_core.py              # Dependency-free pure logic (geometry, OCR/intent text) — unit tested
 ├── backendcodeforobjectgrabber.py  # Standalone webcam demo of the hand-to-object finder
 ├── image-description.py            # Standalone script: capture a frame and describe it with GPT-4o
 ├── image-to-tts.py                 # Standalone script: OCR a frame and speak it with gTTS
+├── tests/                          # pytest suite for sightsense_core
 ├── requirements.txt                # Python dependencies (unpinned)
 ├── .env.example                    # Template for the OPENAI_API_KEY env var
 └── Sightsense/                     # Xcode project for the SwiftUI iOS app
@@ -106,6 +110,26 @@ This is a prototype wired for one specific dev environment. Notably:
   the object-location feature needs an NVIDIA GPU. There is no CPU fallback.
 - **Model weights are not committed.** The YOLO `.pt` files are large auto-downloaded
   artifacts and are gitignored; ultralytics fetches them on first run.
+
+## Tests
+
+The deterministic backend logic — hand-to-object direction geometry, the
+depth/distance reach buckets ("go forward" / "object within reach" /
+directional), OCR text formatting, voice-command intent classification, and the
+GPT description prompt — lives in `sightsense_core.py`, which imports no ML, CV,
+network, or GPU dependencies. The pipeline scripts import their logic from there,
+so the runtime behavior is unchanged.
+
+That core is covered by a pytest suite that runs on a plain Python install (no
+models, GPU, secrets, or heavy dependencies):
+
+```bash
+pip install pytest ruff
+ruff check .
+pytest -q
+```
+
+CI runs the same two commands on every push and pull request (see the badge above).
 
 ## License
 

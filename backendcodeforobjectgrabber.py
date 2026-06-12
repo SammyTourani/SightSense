@@ -6,6 +6,7 @@ from PIL import Image
 import numpy as np
 import math
 from sentence_transformers import SentenceTransformer, util
+from sightsense_core import DIRECTIONS
 
 #all model configas
 sentance_model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -37,8 +38,7 @@ if not cap.isOpened():
 #function for full thing which is called upon wanting to find an object
 def handtoobjectfinder():
     name = ''
-    directions = ["Right", "Up-Right", "Up", "Up-Left", 
-     "Left", "Down-Left", "Down", "Down-Right"]
+    directions = DIRECTIONS
     while True:
         ret, frame = cap.read()
         if not ret:
