@@ -2,6 +2,7 @@ import cv2
 import easyocr
 from gtts import gTTS
 import os
+from sightsense_core import extract_ocr_text
 
 cap = cv2.VideoCapture(0)
 
@@ -13,8 +14,8 @@ def perform_ocr_and_speak(image_path, language='en', output_file='output.mp3'):
     result = reader.readtext(image_path)
     
     # Extract text from the result
-    extracted_text = " ".join([text[1] for text in result])
-    
+    extracted_text = extract_ocr_text(result)
+
     print("Extracted Text:", extracted_text)
     
     # Create a gTTS object
